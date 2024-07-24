@@ -1,0 +1,93 @@
+
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(lubridate)
+
+# 1. 데이터 불러오기
+
+
+# 파일 경로 설정 및 데이터 불러오기
+file_path <- "ga_exam1.csv"
+data <- read.csv(file_path)
+
+
+# 데이터 구조 확인
+str(data)
+
+# 2. 결측치 확인
+
+# 결측치 확인
+missing_values <- colSums(is.na(data))
+missing_values
+
+# 3. 기초 통계량
+
+# 기초 통계량 확인
+summary_statistics <- data %>%
+  summarise(
+    sessions_mean = mean(sessions, na.rm = TRUE),
+    sessions_sd = sd(sessions, na.rm = TRUE),
+    totalUsers_mean = mean(totalUsers, na.rm = TRUE),
+    totalUsers_sd = sd(totalUsers, na.rm = TRUE)
+  )
+summary_statistics
+
+summary(data)
+
+
+# 4. 날짜별 세션 수와 사용자 수의 변화 추이
+
+# 날짜형 변환 및 정렬
+data <- data %>%
+  mutate(date = as_date(date)) %>%
+  arrange(date)
+
+# 시각화
+
+ggplot(data, aes(x = date)) +
+  geom_line(aes(y = sessions), color = "blue") +
+  geom_point(aes(y = sessions), color = "blue") +
+  labs(title = "Sessions Over Time", x = "Date", y = "Sessions") +
+  theme_minimal()
+
+ggplot(data, aes(x = date)) +
+  geom_line(aes(y = totalUsers), color = "orange") +
+  geom_point(aes(y = totalUsers), color = "orange") +
+  labs(title = "Total Users Over Time", x = "Date", y = "Total Users") +
+  theme_minimal()
+
+
+# 6. 세션 수와 총 사용자 수 간의 상관 관계
+# 상관 관계 계산
+correlation <- cor(data$sessions, data$totalUsers, use = "complete.obs")
+correlation
+
+# 6. 월별 세션 수와 사용자 수
+
+# 월별 데이터 집계
+data <- data %>%
+  mutate(month = floor_date(date, "month"))
+
+monthly_data <- data %>%
+  group_by(month) %>%
+  summarise(
+    total_sessions = sum(sessions, na.rm = TRUE),
+    total_users = sum(totalUsers, na.rm = TRUE)
+  )
+
+# 월별 세션 수 시각화
+ggplot(monthly_data, aes(x = month)) +
+  geom_bar(aes(y = total_sessions), stat = "identity", fill = "blue") +
+  labs(title = "Monthly Sessions", x = "Month", y = "Sessions") +
+  theme_minimal()
+
+# 월별 사용자 수 시각화
+ggplot(monthly_data, aes(x = month)) +
+  geom_bar(aes(y = total_users), stat = "identity", fill = "orange") +
+  labs(title = "Monthly Total Users", x = "Month", y = "Total Users") +
+  theme_minimal()
+
+# 7. 요약
+# 세션 수와 총 사용자 수의 추이를 분석하여 시즌별 또는 특정 이벤트의 영향을 확인할 수 있습니다.
+# 세션 수와 사용자 수 간의 상관 관계를 통해 사용자의 참여도를 평가할 수 있습니다.
+# 월별 분석을 통해 특정 월의 성과를 비교할 수 있습니다.
